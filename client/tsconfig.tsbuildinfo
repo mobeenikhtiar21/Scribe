@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/main.tsx","./src/api/client.ts","./src/components/actionbar.tsx","./src/components/draftorderslist.tsx","./src/components/messageaction.tsx","./src/components/notesaction.tsx","./src/components/ordersummary.tsx","./src/components/printaction.tsx","./src/components/sendaction.tsx","./src/types/index.ts"],"version":"5.9.3"}

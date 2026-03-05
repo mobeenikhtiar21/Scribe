@@ -38,13 +38,19 @@ export function ImportDraftModal({ isOpen, onClose, onImported }: ImportDraftMod
     }
   };
 
+  const handleClose = () => {
+    setUrl('');
+    setError(null);
+    onClose();
+  };
+
   return (
     <Modal
       isOpen={isOpen}
-      onClose={onClose}
+      onClose={handleClose}
       header="Import Draft Order"
       actions={[
-        { text: 'Cancel', variant: 'subtle', onClick: onClose },
+        { text: 'Cancel', variant: 'subtle', onClick: handleClose },
         {
           text: loading ? 'Importing...' : 'Import',
           onClick: handleImport,

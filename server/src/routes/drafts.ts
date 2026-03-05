@@ -12,11 +12,20 @@ export const draftsRouter = Router();
  */
 draftsRouter.get('/', (req: Request, res: Response) => {
   try {
+    const page = Math.max(1, parseInt(req.query.page as string, 10) || 1);
+    const limit = Math.max(1, Math.min(250, parseInt(req.query.limit as string, 10) || 50));
+    const offset = (page - 1) * limit;
+
     const db = getDb();
+    const { total: totalItems } = db
+      .prepare('SELECT COUNT(*) as total FROM draft_orders WHERE store_hash = ?')
+      .get(req.storeHash!) as { total: number };
+
     const drafts = db
-      .prepare('SELECT * FROM draft_orders WHERE store_hash = ? ORDER BY created_at DESC')
-      .all(req.storeHash!);
-    res.json(drafts);
+      .prepare('SELECT * FROM draft_orders WHERE store_hash = ? ORDER BY created_at DESC LIMIT ? OFFSET ?')
+      .all(req.storeHash!, limit, offset);
+
+    res.json({ data: drafts, pagination: { page, limit, totalItems } });
   } catch (err) {
     console.error('List drafts error:', err);
     res.status(500).json({ message: 'Failed to list draft orders' });
@@ -122,12 +131,26 @@ draftsRouter.post('/import', async (req: Request, res: Response) => {
 
     // Extract customer info from cart if available
     const customerEmail = (cart.email as string) || null;
+    let customerName: string | null = null;
+    const customerId = cart.customer_id as number | undefined;
+    if (customerId) {
+      try {
+        const custResult = await bc.getCustomers({ 'email:like': customerEmail || undefined } as Record<string, string>);
+        const customers = custResult?.data || [];
+        const match = customers.find((c) => c.id === customerId) || customers[0];
+        if (match) {
+          customerName = `${(match.first_name as string) || ''} ${(match.last_name as string) || ''}`.trim() || null;
+        }
+      } catch {
+        // Customer lookup failed — proceed without name
+      }
+    }
 
     const db = getDb();
     db.prepare(`
-      INSERT OR IGNORE INTO draft_orders (store_hash, cart_id, customer_email, checkout_url, total, currency_code)
-      VALUES (?, ?, ?, ?, ?, ?)
-    `).run(req.storeHash!, cartId, customerEmail, checkoutUrl, String(total), currencyCode);
+      INSERT OR IGNORE INTO draft_orders (store_hash, cart_id, customer_email, customer_name, checkout_url, total, currency_code)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `).run(req.storeHash!, cartId, customerEmail, customerName, checkoutUrl, String(total), currencyCode);
 
     const draft = db.prepare('SELECT * FROM draft_orders WHERE cart_id = ?').get(cartId);
     res.status(201).json(draft);

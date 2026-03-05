@@ -1,4 +1,5 @@
-import { Box, Flex, FlexItem, H2, Text, Badge, HR, Table, Input, Button } from '@bigcommerce/big-design';
+import { Box, Flex, FlexItem, Text, Badge, Table } from '@bigcommerce/big-design';
+import { FileCopyIcon } from '@bigcommerce/big-design-icons';
 import { useState } from 'react';
 import type { DraftOrder } from '../types';
 
@@ -38,6 +39,15 @@ function copyToClipboard(text: string) {
   });
 }
 
+function truncateUrl(url: string): string {
+  try {
+    const u = new URL(url);
+    return u.hostname + u.pathname.substring(0, 12) + '...';
+  } catch {
+    return url.substring(0, 30) + '...';
+  }
+}
+
 export function DraftSummary({ draft, cart }: DraftSummaryProps) {
   const [copied, setCopied] = useState(false);
 
@@ -63,7 +73,7 @@ export function DraftSummary({ draft, cart }: DraftSummaryProps) {
       {/* Header */}
       <Flex justifyContent="space-between" alignItems="center">
         <FlexItem>
-          <H2 marginBottom="none">Draft Order</H2>
+          <h2 style={{ margin: 0 }}>Order Details</h2>
         </FlexItem>
         <FlexItem>
           <Badge label={draft.status} variant={draft.status === 'open' ? 'warning' : draft.status === 'converted' ? 'success' : 'danger'} />
@@ -72,58 +82,59 @@ export function DraftSummary({ draft, cart }: DraftSummaryProps) {
 
       {/* Meta */}
       <Box marginTop="small">
-        <Flex flexGap="1.5rem" flexWrap="wrap">
+        <Flex flexGap="2rem" flexWrap="wrap" alignItems="flex-start">
           <FlexItem>
-            <Text color="secondary" marginBottom="none">Customer</Text>
-            <Text marginBottom="none">{customerName}</Text>
+            <div className="scribe-meta-label">Customer</div>
+            <div className="scribe-meta-value">{customerName}</div>
           </FlexItem>
           <FlexItem>
-            <Text color="secondary" marginBottom="none">Email</Text>
-            <Text marginBottom="none">{customerEmail}</Text>
+            <div className="scribe-meta-label">Email</div>
+            <div className="scribe-meta-value">{customerEmail}</div>
           </FlexItem>
           <FlexItem>
-            <Text color="secondary" marginBottom="none">Date</Text>
-            <Text marginBottom="none">{formatDate(draft.created_at)}</Text>
+            <div className="scribe-meta-label">Date</div>
+            <div className="scribe-meta-value">{formatDate(draft.created_at)}</div>
           </FlexItem>
+          {draft.checkout_url && (
+            <FlexItem>
+              <div className="scribe-meta-label">Checkout URL</div>
+              <div className="scribe-meta-value">
+                <a href={draft.checkout_url} target="_blank" rel="noopener noreferrer">
+                  {truncateUrl(draft.checkout_url)}
+                </a>
+                <FileCopyIcon
+                  className="scribe-copy-icon"
+                  size="medium"
+                  title={copied ? 'Copied!' : 'Copy checkout URL'}
+                  onClick={handleCopy}
+                />
+              </div>
+            </FlexItem>
+          )}
           <FlexItem>
-            <Text color="secondary" marginBottom="none">Total</Text>
-            <Text bold marginBottom="none">{formatCurrency(total)}</Text>
+            <div className="scribe-meta-label">Total</div>
+            <div className="scribe-meta-value" style={{ fontWeight: 600 }}>{formatCurrency(total)}</div>
           </FlexItem>
         </Flex>
       </Box>
 
-      {/* Checkout URL */}
-      {draft.checkout_url && (
-        <Box marginTop="small">
-          <Text color="secondary" marginBottom="none">Checkout URL</Text>
-          <Flex flexGap="0.5rem" alignItems="center" marginTop="xxSmall">
-            <Box style={{ flex: 1 }}>
-              <Input
-                value={draft.checkout_url}
-                readOnly
-                onClick={(e) => (e.target as HTMLInputElement).select()}
-              />
-            </Box>
-            <Button variant="secondary" onClick={handleCopy}>
-              {copied ? 'Copied!' : 'Copy'}
-            </Button>
-          </Flex>
-        </Box>
-      )}
-
       {/* Line items */}
       {items.length > 0 && (
-        <Box marginTop="medium">
+        <Box style={{ marginTop: '2.5rem' }}>
           <Table
             columns={[
               {
                 header: 'Product',
                 hash: 'name',
-                render: ({ name, sku }: CartItem) => (
-                  <Box>
-                    <Text marginBottom="none">{name}</Text>
-                    {sku && <Text color="secondary" marginBottom="none"><small>{sku}</small></Text>}
-                  </Box>
+                render: ({ name }: CartItem) => <Text marginBottom="none">{name}</Text>,
+              },
+              {
+                header: 'SKU',
+                hash: 'sku',
+                render: ({ sku }: CartItem) => (
+                  sku
+                    ? <span className="scribe-sku-badge">{sku}</span>
+                    : <Text marginBottom="none">—</Text>
                 ),
               },
               {
@@ -152,7 +163,6 @@ export function DraftSummary({ draft, cart }: DraftSummaryProps) {
         </Box>
       )}
 
-      <HR marginTop="medium" />
     </Box>
   );
 }

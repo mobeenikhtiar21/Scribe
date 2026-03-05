@@ -1,4 +1,4 @@
-import { Box, Flex, FlexItem, H2, Text, Badge, HR, Table } from '@bigcommerce/big-design';
+import { Box, Flex, FlexItem, Text, Small, Badge, Table } from '@bigcommerce/big-design';
 import type { Order, OrderProduct } from '../types';
 
 interface OrderSummaryProps {
@@ -41,7 +41,7 @@ export function OrderSummary({ order }: OrderSummaryProps) {
       {/* Header row: Order # + Status badge */}
       <Flex justifyContent="space-between" alignItems="center">
         <FlexItem>
-          <H2 marginBottom="none">Order #{order.id}</H2>
+          <h2 style={{ margin: 0 }}>Order #{order.id}</h2>
         </FlexItem>
         <FlexItem>
           <Badge label={order.status} variant={statusVariant(order.status)} />
@@ -50,22 +50,22 @@ export function OrderSummary({ order }: OrderSummaryProps) {
 
       {/* Order meta */}
       <Box marginTop="small">
-        <Flex flexGap="1.5rem" flexWrap="wrap">
+        <Flex flexGap="2rem" flexWrap="wrap">
           <FlexItem>
-            <Text color="secondary" marginBottom="none">Customer</Text>
-            <Text marginBottom="none">{customerName}</Text>
+            <div className="scribe-meta-label">Customer</div>
+            <div className="scribe-meta-value">{customerName}</div>
           </FlexItem>
           <FlexItem>
-            <Text color="secondary" marginBottom="none">Email</Text>
-            <Text marginBottom="none">{order.billing_address?.email || 'N/A'}</Text>
+            <div className="scribe-meta-label">Email</div>
+            <div className="scribe-meta-value">{order.billing_address?.email || 'N/A'}</div>
           </FlexItem>
           <FlexItem>
-            <Text color="secondary" marginBottom="none">Date</Text>
-            <Text marginBottom="none">{formatDate(order.date_created)}</Text>
+            <div className="scribe-meta-label">Date</div>
+            <div className="scribe-meta-value">{formatDate(order.date_created)}</div>
           </FlexItem>
           <FlexItem>
-            <Text color="secondary" marginBottom="none">Total</Text>
-            <Text bold marginBottom="none">{formatCurrency(order.total_inc_tax)}</Text>
+            <div className="scribe-meta-label">Total</div>
+            <div className="scribe-meta-value" style={{ fontWeight: 600 }}>{formatCurrency(order.total_inc_tax)}</div>
           </FlexItem>
         </Flex>
       </Box>
@@ -81,7 +81,7 @@ export function OrderSummary({ order }: OrderSummaryProps) {
                 render: ({ name, sku }: OrderProduct) => (
                   <Box>
                     <Text marginBottom="none">{name}</Text>
-                    {sku && <Text color="secondary" marginBottom="none"><small>{sku}</small></Text>}
+                    {sku && <Small color="secondary">{sku}</Small>}
                   </Box>
                 ),
               },
@@ -112,8 +112,6 @@ export function OrderSummary({ order }: OrderSummaryProps) {
           />
         </Box>
       )}
-
-      <HR marginTop="medium" />
     </Box>
   );
 }

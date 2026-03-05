@@ -98,8 +98,12 @@ export const api = {
 
   // ── Draft Orders ──────────────────────────────────────────
 
-  listDrafts() {
-    return request<Record<string, unknown>[]>('/drafts');
+  listDrafts(params?: { page?: number; limit?: number }) {
+    const query = new URLSearchParams();
+    if (params?.page) query.set('page', String(params.page));
+    if (params?.limit) query.set('limit', String(params.limit));
+    const qs = query.toString();
+    return request<{ data: Record<string, unknown>[]; pagination: { page: number; limit: number; totalItems: number } }>(`/drafts${qs ? `?${qs}` : ''}`);
   },
 
   createDraft(body: { line_items: { product_id: number; quantity: number }[]; customer_id?: number; customer_email?: string; customer_name?: string }) {

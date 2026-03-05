@@ -2,11 +2,15 @@ import { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Flex,
+  FlexItem,
   Text,
+  Small,
   Textarea,
   Button,
+  FormGroup,
   InlineMessage,
   HR,
+  Badge,
 } from '@bigcommerce/big-design';
 import { api } from '../api/client';
 import type { Note } from '../types';
@@ -57,21 +61,29 @@ export function DraftNotesAction({ cartId }: DraftNotesActionProps) {
 
   return (
     <Box>
-      <Text>Internal notes for this draft order. Only visible to staff.</Text>
+      <Flex justifyContent="space-between" alignItems="center" marginBottom="small">
+        <FlexItem>
+          <Text bold marginBottom="none">Internal Notes</Text>
+        </FlexItem>
+        <FlexItem>
+          <Badge label={`${notes.length}`} variant="secondary" />
+        </FlexItem>
+      </Flex>
 
-      <Box marginTop="small">
-        <Textarea
-          label="New Note"
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          rows={3}
-          placeholder="Add a note about this draft..."
-        />
+      <Box marginBottom="medium">
+        <FormGroup>
+          <Textarea
+            label="Add a note"
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            rows={3}
+            placeholder="Add an internal note about this draft..."
+          />
+        </FormGroup>
         <Button
           isLoading={loading}
           onClick={handleAdd}
           disabled={!content.trim()}
-          marginTop="xSmall"
         >
           Add Note
         </Button>
@@ -81,24 +93,33 @@ export function DraftNotesAction({ cartId }: DraftNotesActionProps) {
         <InlineMessage
           type="error"
           messages={[{ text: error }]}
-          marginTop="small"
+          marginBottom="small"
           onClose={() => setError(null)}
         />
       )}
 
-      {notes.length > 0 && (
-        <Box marginTop="medium">
-          <HR />
-          {notes.map((note) => (
-            <Box key={note.id} marginTop="small" padding="small" style={{ background: '#f9fafb', borderRadius: 4 }}>
-              <Flex justifyContent="space-between">
+      <HR />
+
+      {notes.length === 0 ? (
+        <Text color="secondary" marginTop="small">No notes yet for this draft.</Text>
+      ) : (
+        notes.map((note) => (
+          <Box key={note.id} marginTop="small" padding="small" className="scribe-note-card">
+            <Flex justifyContent="space-between" alignItems="center">
+              <FlexItem>
                 <Text bold marginBottom="none">{note.author}</Text>
-                <Text color="secondary" marginBottom="none">{formatDate(note.created_at)}</Text>
-              </Flex>
-              <Text marginBottom="none" marginTop="xxSmall">{note.content}</Text>
-            </Box>
-          ))}
-        </Box>
+              </FlexItem>
+              <FlexItem>
+                <Text color="secondary" marginBottom="none">
+                  <Small>{formatDate(note.created_at)}</Small>
+                </Text>
+              </FlexItem>
+            </Flex>
+            <Text marginTop="xxSmall" marginBottom="none" style={{ whiteSpace: 'pre-wrap' }}>
+              {note.content}
+            </Text>
+          </Box>
+        ))
       )}
     </Box>
   );

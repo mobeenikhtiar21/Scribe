@@ -1,0 +1,176 @@
+/* Scribe — global overrides to match BigCommerce admin look & feel */
+
+/* ── Page background ───────────────────────────────────────────────── */
+body {
+  background-color: #f5f6f8;
+}
+
+/* ── Scale down BigDesign typography to match BC admin ──────────────── */
+/* BC admin uses ~24px for page titles, not the 36px BigDesign default */
+#root h1 {
+  font-size: 1.5rem;
+  font-weight: 500;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  color: #313440;
+}
+#root h2 {
+  font-size: 1.15rem;
+  font-weight: 600;
+  line-height: 1.35;
+  color: #313440;
+}
+
+/* Smaller body text — BC admin runs ~14px, BigDesign defaults to 16px */
+#root p,
+#root span,
+#root td,
+#root th {
+  font-size: 0.875rem;
+}
+
+/* ── Compact tables ────────────────────────────────────────────────── */
+#root table th,
+#root table td {
+  padding: 10px 12px;
+}
+#root table th {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #6b7280;
+}
+
+/* ── Panels — white card feel with subtle shadow like BC ────────────── */
+#root [class*="StyledBox"] > [class*="StyledBox"] {
+  border-radius: 6px;
+}
+
+/* ── Buttons — slightly smaller ─────────────────────────────────────── */
+#root button {
+  font-size: 0.875rem;
+}
+
+/* ── Inputs — slightly smaller ──────────────────────────────────────── */
+#root input,
+#root textarea {
+  font-size: 0.875rem;
+}
+
+/* ── Badge — smaller ────────────────────────────────────────────────── */
+#root [class*="StyledBadge"] {
+  font-size: 0.7rem;
+  padding: 2px 8px;
+}
+
+/* ── Tabs — lighter like BC admin ────────────────────────────────────── */
+#root [role="tablist"] button {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+/* ── Autocomplete dropdown items ─────────────────────────────────────── */
+.scribe-autocomplete-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  font-size: 0.875rem;
+}
+.scribe-autocomplete-item:hover,
+.scribe-autocomplete-item[aria-selected='true'] {
+  background-color: #f0f3ff;
+}
+.scribe-autocomplete-item:focus-visible {
+  outline: 2px solid #3c64f4;
+  outline-offset: -2px;
+}
+
+/* ── Note cards ──────────────────────────────────────────────────────── */
+.scribe-note-card {
+  background: #f6f7fc;
+  border-radius: 4px;
+  border-left: 3px solid #3c64f4;
+  transition: box-shadow 0.15s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+.scribe-note-card:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* ── Centered loader ─────────────────────────────────────────────────── */
+.scribe-loader-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+}
+
+/* ── Illustrated empty state ─────────────────────────────────────────── */
+.scribe-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  text-align: center;
+}
+
+/* ── Summary meta row — compact inline style ─────────────────────────── */
+.scribe-meta-label {
+  font-size: 0.75rem;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 2px;
+}
+.scribe-meta-value {
+  font-size: 0.875rem;
+  color: #313440;
+}
+
+/* ── Back button — lighter ───────────────────────────────────────────── */
+.scribe-back-btn {
+  font-size: 0.825rem;
+  color: #5c6ac4;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 0;
+  margin-bottom: 12px;
+  background: none;
+  border: none;
+  font-weight: 500;
+}
+.scribe-back-btn:hover {
+  color: #3c64f4;
+  text-decoration: underline;
+}
+
+/* ── Copy icon next to checkout URL ─────────────────────────────────── */
+.scribe-copy-icon {
+  cursor: pointer;
+  color: #6b7280;
+  vertical-align: middle;
+  margin-left: 4px;
+  transition: color 0.15s ease;
+}
+.scribe-copy-icon:hover {
+  color: #3c64f4;
+}
+
+/* ── SKU badge / pill ──────────────────────────────────────────────── */
+.scribe-sku-badge {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-family: SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: #4b5563;
+  background: #f0f1f4;
+  border: 1px solid #e2e4e9;
+  border-radius: 4px;
+  padding: 2px 8px;
+  white-space: nowrap;
+}

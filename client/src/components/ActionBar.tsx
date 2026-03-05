@@ -5,6 +5,7 @@ interface ActionBarProps {
   activeView: ActionView;
   onViewChange: (view: ActionView) => void;
   orderId: string;
+  isDraft?: boolean;
 }
 
 const tabs = [
@@ -14,7 +15,7 @@ const tabs = [
   { id: 'notes' as const, title: 'Notes' },
 ];
 
-export function ActionBar({ activeView, onViewChange, orderId }: ActionBarProps) {
+export function ActionBar({ activeView, onViewChange, orderId, isDraft }: ActionBarProps) {
   return (
     <Box marginBottom="medium">
       <Flex justifyContent="space-between" alignItems="flex-end">
@@ -25,16 +26,18 @@ export function ActionBar({ activeView, onViewChange, orderId }: ActionBarProps)
             onTabClick={(tabId) => onViewChange(tabId as ActionView)}
           />
         </FlexItem>
-        <FlexItem>
-          <Button
-            variant="subtle"
-            onClick={() => {
-              window.open(`/manage/orders/${orderId}/edit`, '_blank');
-            }}
-          >
-            Edit Order
-          </Button>
-        </FlexItem>
+        {!isDraft && (
+          <FlexItem>
+            <Button
+              variant="subtle"
+              onClick={() => {
+                window.open(`/manage/orders/${orderId}/edit`, '_blank');
+              }}
+            >
+              Edit Order
+            </Button>
+          </FlexItem>
+        )}
       </Flex>
     </Box>
   );

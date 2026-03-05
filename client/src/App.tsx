@@ -16,7 +16,12 @@ import { SendAction } from './components/SendAction';
 import { MessageAction } from './components/MessageAction';
 import { NotesAction } from './components/NotesAction';
 import { DraftOrdersList } from './components/DraftOrdersList';
-import type { ActionView, Order } from './types';
+import { DraftSummary } from './components/DraftSummary';
+import { DraftPrintAction } from './components/DraftPrintAction';
+import { DraftSendAction } from './components/DraftSendAction';
+import { DraftMessageAction } from './components/DraftMessageAction';
+import { DraftNotesAction } from './components/DraftNotesAction';
+import type { ActionView, Order, DraftOrder } from './types';
 
 function App() {
   // Read params from URL (set by /auth/load redirect)
@@ -24,8 +29,14 @@ function App() {
   const urlOrderId = params.get('order_id');
   const context = params.get('context');
 
+  // Order mode (from side panel extension click)
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(urlOrderId);
   const [order, setOrder] = useState<Order | null>(null);
+
+  // Draft mode (from draft list click)
+  const [selectedDraft, setSelectedDraft] = useState<DraftOrder | null>(null);
+  const [draftCart, setDraftCart] = useState<Record<string, unknown> | null>(null);
+
   const [activeView, setActiveView] = useState<ActionView>('print');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -40,6 +51,19 @@ function App() {
       .finally(() => setLoading(false));
   }, []);
 
+  const fetchDraft = useCallback((draft: DraftOrder) => {
+    setLoading(true);
+    setError(null);
+    api
+      .getDraft(draft.cart_id)
+      .then((data) => {
+        setDraftCart(data.cart);
+        setSelectedDraft(draft);
+      })
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
+  }, []);
+
   useEffect(() => {
     if (selectedOrderId) {
       fetchOrder(selectedOrderId);
@@ -48,16 +72,27 @@ function App() {
 
   const handleSelectOrder = (orderId: number) => {
     setSelectedOrderId(String(orderId));
+    setSelectedDraft(null);
+    setDraftCart(null);
     setActiveView('print');
+  };
+
+  const handleSelectDraft = (draft: DraftOrder) => {
+    setSelectedOrderId(null);
+    setOrder(null);
+    setActiveView('print');
+    fetchDraft(draft);
   };
 
   const handleBackToList = () => {
     setSelectedOrderId(null);
+    setSelectedDraft(null);
     setOrder(null);
+    setDraftCart(null);
     setError(null);
   };
 
-  // Loading spinner while fetching order detail
+  // Loading spinner
   if (loading) {
     return (
       <Box padding="medium">
@@ -68,8 +103,8 @@ function App() {
     );
   }
 
-  // No order selected — show draft orders list
-  if (!selectedOrderId) {
+  // No selection — show draft orders list
+  if (!selectedOrderId && !selectedDraft) {
     if (!context) {
       return (
         <Box padding="medium">
@@ -85,10 +120,42 @@ function App() {
         </Box>
       );
     }
-    return <DraftOrdersList onSelectOrder={handleSelectOrder} />;
+    return (
+      <DraftOrdersList
+        onSelectOrder={handleSelectOrder}
+        onSelectDraft={handleSelectDraft}
+      />
+    );
   }
 
-  // Error state with retry
+  // ── Draft Action Panel ──────────────────────────────────────────────
+  if (selectedDraft && draftCart) {
+    return (
+      <Box padding="medium">
+        <H1>Scribe Actions</H1>
+        <Button variant="subtle" onClick={handleBackToList} marginBottom="medium">
+          ← Back to Draft Orders
+        </Button>
+        <Panel>
+          <DraftSummary draft={selectedDraft} cart={draftCart} />
+          <ActionBar
+            activeView={activeView}
+            onViewChange={setActiveView}
+            orderId={selectedDraft.cart_id}
+          />
+
+          <Box marginTop="medium">
+            {activeView === 'print' && <DraftPrintAction cartId={selectedDraft.cart_id} />}
+            {activeView === 'send' && <DraftSendAction draft={selectedDraft} />}
+            {activeView === 'message' && <DraftMessageAction draft={selectedDraft} />}
+            {activeView === 'notes' && <DraftNotesAction cartId={selectedDraft.cart_id} />}
+          </Box>
+        </Panel>
+      </Box>
+    );
+  }
+
+  // ── Order Action Panel (from side panel extension) ──────────────────
   if (error || !order) {
     return (
       <Box padding="medium">
@@ -106,7 +173,7 @@ function App() {
             {
               text: 'Try Again',
               variant: 'secondary',
-              onClick: () => fetchOrder(selectedOrderId),
+              onClick: () => fetchOrder(selectedOrderId!),
             },
           ]}
         />
@@ -114,7 +181,6 @@ function App() {
     );
   }
 
-  // Order loaded — show action panel
   return (
     <Box padding="medium">
       <H1>Scribe Actions</H1>
@@ -128,14 +194,14 @@ function App() {
         <ActionBar
           activeView={activeView}
           onViewChange={setActiveView}
-          orderId={selectedOrderId}
+          orderId={selectedOrderId!}
         />
 
         <Box marginTop="medium">
-          {activeView === 'print' && <PrintAction orderId={selectedOrderId} />}
-          {activeView === 'send' && <SendAction orderId={selectedOrderId} order={order} />}
-          {activeView === 'message' && <MessageAction orderId={selectedOrderId} order={order} />}
-          {activeView === 'notes' && <NotesAction orderId={selectedOrderId} />}
+          {activeView === 'print' && <PrintAction orderId={selectedOrderId!} />}
+          {activeView === 'send' && <SendAction orderId={selectedOrderId!} order={order} />}
+          {activeView === 'message' && <MessageAction orderId={selectedOrderId!} order={order} />}
+          {activeView === 'notes' && <NotesAction orderId={selectedOrderId!} />}
         </Box>
       </Panel>
     </Box>

@@ -114,7 +114,7 @@ function lineItemsTable(products: LineItem[]): string {
 
 export interface OrderEmailData {
   storeName: string;
-  orderId: number;
+  orderId: number | string;
   customerFirstName: string;
   totalIncTax: string;
   subtotalIncTax?: string;
@@ -176,7 +176,7 @@ export function buildOrderEmail(data: OrderEmailData): string {
 
 export interface MessageEmailData {
   storeName: string;
-  orderId: number;
+  orderId: number | string;
   customerFirstName: string;
   subject: string;
   messageBody: string;

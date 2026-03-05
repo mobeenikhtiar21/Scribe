@@ -10,7 +10,6 @@ import {
   ProgressCircle,
   Message,
   Button,
-  Small,
 } from '@bigcommerce/big-design';
 import { AddIcon, ArrowDownwardIcon } from '@bigcommerce/big-design-icons';
 import { api } from '../api/client';
@@ -20,12 +19,13 @@ import { ImportDraftModal } from './ImportDraftModal';
 
 interface DraftOrdersListProps {
   onSelectOrder: (orderId: number) => void;
+  onSelectDraft: (draft: DraftOrder) => void;
 }
 
-function statusVariant(status: string): 'success' | 'warning' | 'danger' | 'secondary' | 'primary' {
+function statusVariant(status: string): 'success' | 'warning' | 'danger' {
   if (status === 'converted') return 'success';
   if (status === 'expired') return 'danger';
-  return 'warning'; // open
+  return 'warning';
 }
 
 function formatDate(dateStr: string): string {
@@ -43,25 +43,12 @@ function formatCurrency(amount: string | null, currency: string | null): string 
   return `${currency || '$'}${num.toFixed(2)}`;
 }
 
-function copyToClipboard(text: string) {
-  navigator.clipboard.writeText(text).catch(() => {
-    // Fallback for older browsers
-    const el = document.createElement('textarea');
-    el.value = text;
-    document.body.appendChild(el);
-    el.select();
-    document.execCommand('copy');
-    document.body.removeChild(el);
-  });
-}
-
-export function DraftOrdersList({ onSelectOrder: _onSelectOrder }: DraftOrdersListProps) {
+export function DraftOrdersList({ onSelectDraft }: DraftOrdersListProps) {
   const [drafts, setDrafts] = useState<DraftOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
-  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const loadDrafts = useCallback(() => {
     setLoading(true);
@@ -74,21 +61,6 @@ export function DraftOrdersList({ onSelectOrder: _onSelectOrder }: DraftOrdersLi
   }, []);
 
   useEffect(() => { loadDrafts(); }, [loadDrafts]);
-
-  const handleDelete = async (cartId: string) => {
-    try {
-      await api.deleteDraft(cartId);
-      setDrafts((prev) => prev.filter((d) => d.cart_id !== cartId));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete draft');
-    }
-  };
-
-  const handleCopy = (cartId: string, url: string) => {
-    copyToClipboard(url);
-    setCopiedId(cartId);
-    setTimeout(() => setCopiedId(null), 2000);
-  };
 
   if (loading) {
     return (
@@ -106,7 +78,7 @@ export function DraftOrdersList({ onSelectOrder: _onSelectOrder }: DraftOrdersLi
       <Panel>
         <Flex justifyContent="space-between" alignItems="center" marginBottom="medium">
           <Text marginBottom="none">
-            Draft Orders — create new drafts or import existing ones from BigCommerce admin.
+            Draft Orders — click a row to open Print, Send, Message, and Notes actions.
           </Text>
           <Flex flexGap="0.5rem">
             <Button
@@ -149,11 +121,13 @@ export function DraftOrdersList({ onSelectOrder: _onSelectOrder }: DraftOrdersLi
           <Table
             columns={[
               {
-                header: 'Cart ID',
+                header: 'Draft',
                 hash: 'cart_id',
-                render: ({ cart_id }: DraftOrder) => (
+                render: (draft: DraftOrder) => (
                   <Text marginBottom="none">
-                    <Small>{cart_id.substring(0, 8)}...</Small>
+                    <Button variant="subtle" onClick={() => onSelectDraft(draft)}>
+                      {draft.cart_id.substring(0, 8)}...
+                    </Button>
                   </Text>
                 ),
               },
@@ -164,6 +138,13 @@ export function DraftOrdersList({ onSelectOrder: _onSelectOrder }: DraftOrdersLi
                   <Text marginBottom="none">
                     {customer_name || customer_email || 'Guest'}
                   </Text>
+                ),
+              },
+              {
+                header: 'Email',
+                hash: 'email',
+                render: ({ customer_email }: DraftOrder) => (
+                  <Text marginBottom="none">{customer_email || 'N/A'}</Text>
                 ),
               },
               {
@@ -187,33 +168,6 @@ export function DraftOrdersList({ onSelectOrder: _onSelectOrder }: DraftOrdersLi
                 hash: 'status',
                 render: ({ status }: DraftOrder) => (
                   <Badge label={status} variant={statusVariant(status)} />
-                ),
-              },
-              {
-                header: 'Checkout URL',
-                hash: 'checkout_url',
-                render: ({ cart_id, checkout_url }: DraftOrder) =>
-                  checkout_url ? (
-                    <Button
-                      variant="subtle"
-                      onClick={() => handleCopy(cart_id, checkout_url)}
-                    >
-                      {copiedId === cart_id ? 'Copied!' : 'Copy URL'}
-                    </Button>
-                  ) : (
-                    <Text marginBottom="none">—</Text>
-                  ),
-              },
-              {
-                header: '',
-                hash: 'actions',
-                render: ({ cart_id }: DraftOrder) => (
-                  <Button
-                    variant="subtle"
-                    onClick={() => handleDelete(cart_id)}
-                  >
-                    Delete
-                  </Button>
                 ),
               },
             ]}

@@ -124,6 +124,32 @@ export const api = {
     return request<{ success: boolean }>(`/drafts/${cartId}`, { method: 'DELETE' });
   },
 
+  printDraft(cartId: string) {
+    return request<Blob>(`/drafts/${cartId}/print`, { method: 'POST' });
+  },
+
+  sendDraft(cartId: string) {
+    return request<{ success: boolean }>(`/drafts/${cartId}/send`, { method: 'POST' });
+  },
+
+  messageDraftCustomer(cartId: string, body: { subject: string; message: string }) {
+    return request<{ success: boolean }>(`/drafts/${cartId}/message`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  },
+
+  getDraftNotes(cartId: string) {
+    return request<{ notes: Record<string, unknown>[] }>(`/drafts/${cartId}/notes`);
+  },
+
+  addDraftNote(cartId: string, body: { content: string }) {
+    return request<Record<string, unknown>>(`/drafts/${cartId}/notes`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  },
+
   // ── Catalog ───────────────────────────────────────────────
 
   searchProducts(keyword?: string) {

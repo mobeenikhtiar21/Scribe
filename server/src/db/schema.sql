@@ -51,3 +51,15 @@ CREATE TABLE IF NOT EXISTS draft_orders (
   FOREIGN KEY (store_hash) REFERENCES stores(store_hash)
 );
 CREATE INDEX IF NOT EXISTS idx_draft_orders_store ON draft_orders(store_hash);
+
+-- Notes on draft orders (keyed by cart_id instead of order_id)
+CREATE TABLE IF NOT EXISTS draft_notes (
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  store_hash  TEXT NOT NULL,
+  cart_id     TEXT NOT NULL,
+  author      TEXT NOT NULL,
+  content     TEXT NOT NULL,
+  created_at  TEXT DEFAULT (datetime('now')),
+  FOREIGN KEY (store_hash) REFERENCES stores(store_hash)
+);
+CREATE INDEX IF NOT EXISTS idx_draft_notes_store_cart ON draft_notes(store_hash, cart_id);

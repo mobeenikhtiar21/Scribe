@@ -1,0 +1,60 @@
+import { useState } from 'react';
+import { Box, Button, Text, InlineMessage } from '@bigcommerce/big-design';
+import { api } from '../api/client';
+
+interface DraftPrintActionProps {
+  cartId: string;
+}
+
+export function DraftPrintAction({ cartId }: DraftPrintActionProps) {
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handlePrint() {
+    setLoading(true);
+    setError(null);
+    setSuccess(false);
+    try {
+      const blob = await api.printDraft(cartId);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `draft-${cartId.substring(0, 8)}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+      setSuccess(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to generate PDF');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <Box>
+      <Text>Generate a branded PDF of this draft order for printing or sharing.</Text>
+      <Box marginTop="small">
+        <Button isLoading={loading} onClick={handlePrint}>
+          Download PDF
+        </Button>
+      </Box>
+      {success && (
+        <InlineMessage
+          type="success"
+          messages={[{ text: 'PDF downloaded successfully.' }]}
+          marginTop="small"
+          onClose={() => setSuccess(false)}
+        />
+      )}
+      {error && (
+        <InlineMessage
+          type="error"
+          messages={[{ text: error }]}
+          marginTop="small"
+          onClose={() => setError(null)}
+        />
+      )}
+    </Box>
+  );
+}

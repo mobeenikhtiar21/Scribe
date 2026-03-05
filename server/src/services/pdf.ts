@@ -22,7 +22,7 @@ interface LineItem {
 }
 
 export interface OrderPdfData {
-  id: number;
+  id: number | string;
   status: string;
   date_created: string;
   billing_address?: Address;

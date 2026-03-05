@@ -34,3 +34,20 @@ CREATE TABLE IF NOT EXISTS audit_log (
 );
 
 CREATE INDEX IF NOT EXISTS idx_audit_store_order ON audit_log(store_hash, order_id);
+
+-- Draft orders (carts created via Cart API or imported from admin)
+CREATE TABLE IF NOT EXISTS draft_orders (
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  store_hash  TEXT NOT NULL,
+  cart_id     TEXT NOT NULL UNIQUE,
+  customer_email TEXT,
+  customer_name  TEXT,
+  checkout_url   TEXT,
+  total          TEXT,
+  currency_code  TEXT,
+  status         TEXT DEFAULT 'open',    -- open | converted | expired
+  created_at     TEXT DEFAULT (datetime('now')),
+  updated_at     TEXT DEFAULT (datetime('now')),
+  FOREIGN KEY (store_hash) REFERENCES stores(store_hash)
+);
+CREATE INDEX IF NOT EXISTS idx_draft_orders_store ON draft_orders(store_hash);

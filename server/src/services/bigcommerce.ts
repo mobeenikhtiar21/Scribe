@@ -108,6 +108,64 @@ export class BigCommerceClient {
     return this.request<Record<string, unknown>[]>(`/v2/orders?${qs}`);
   }
 
+  // ── Cart API (V3) ────────────────────────────────────────────────
+
+  /** Create a cart with line items, optionally for a specific customer */
+  async createCart(lineItems: { product_id: number; quantity: number }[], customerId?: number) {
+    const body: Record<string, unknown> = { line_items: lineItems };
+    if (customerId) body.customer_id = customerId;
+    return this.request<{ data: Record<string, unknown> }>(
+      '/v3/carts?include=redirect_urls',
+      { method: 'POST', body: JSON.stringify(body) }
+    );
+  }
+
+  /** Get an existing cart by ID */
+  async getCart(cartId: string) {
+    return this.request<{ data: Record<string, unknown> }>(
+      `/v3/carts/${cartId}?include=redirect_urls`
+    );
+  }
+
+  /** Delete a cart by ID */
+  async deleteCart(cartId: string) {
+    const url = `${BC_API_BASE}/${this.storeHash}/v3/carts/${cartId}`;
+    const res = await fetch(url, {
+      method: 'DELETE',
+      headers: {
+        'X-Auth-Token': this.accessToken,
+        Accept: 'application/json',
+      },
+    });
+    if (!res.ok && res.status !== 204) {
+      const body = await res.text();
+      throw new Error(`BigCommerce API error ${res.status}: ${body}`);
+    }
+  }
+
+  // ── Catalog & Customers (V3) ────────────────────────────────────────
+
+  /** Search/list products from the catalog */
+  async getProducts(params?: { keyword?: string; limit?: number; page?: number }) {
+    const query = new URLSearchParams();
+    if (params?.keyword) query.set('keyword', params.keyword);
+    query.set('limit', String(params?.limit || 20));
+    query.set('page', String(params?.page || 1));
+    query.set('include', 'images');
+    const qs = query.toString();
+    return this.request<{ data: Record<string, unknown>[] }>(`/v3/catalog/products?${qs}`);
+  }
+
+  /** Search/list customers */
+  async getCustomers(params?: { 'name:like'?: string; 'email:like'?: string; limit?: number }) {
+    const query = new URLSearchParams();
+    if (params?.['name:like']) query.set('name:like', params['name:like']);
+    if (params?.['email:like']) query.set('email:like', params['email:like']);
+    query.set('limit', String(params?.limit || 20));
+    const qs = query.toString();
+    return this.request<{ data: Record<string, unknown>[] }>(`/v3/customers?${qs}`);
+  }
+
   // ── GraphQL: App Extensions ────────────────────────────────────────
 
   /**

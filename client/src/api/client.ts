@@ -95,4 +95,44 @@ export const api = {
       body: JSON.stringify(body),
     });
   },
+
+  // ── Draft Orders ──────────────────────────────────────────
+
+  listDrafts() {
+    return request<Record<string, unknown>[]>('/drafts');
+  },
+
+  createDraft(body: { line_items: { product_id: number; quantity: number }[]; customer_id?: number; customer_email?: string; customer_name?: string }) {
+    return request<Record<string, unknown>>('/drafts', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  },
+
+  importDraft(url: string) {
+    return request<Record<string, unknown>>('/drafts/import', {
+      method: 'POST',
+      body: JSON.stringify({ url }),
+    });
+  },
+
+  getDraft(cartId: string) {
+    return request<{ cart: Record<string, unknown>; draft: Record<string, unknown> | null }>(`/drafts/${cartId}`);
+  },
+
+  deleteDraft(cartId: string) {
+    return request<{ success: boolean }>(`/drafts/${cartId}`, { method: 'DELETE' });
+  },
+
+  // ── Catalog ───────────────────────────────────────────────
+
+  searchProducts(keyword?: string) {
+    const qs = keyword ? `?keyword=${encodeURIComponent(keyword)}` : '';
+    return request<Record<string, unknown>[]>(`/catalog/products${qs}`);
+  },
+
+  searchCustomers(keyword?: string) {
+    const qs = keyword ? `?keyword=${encodeURIComponent(keyword)}` : '';
+    return request<Record<string, unknown>[]>(`/catalog/customers${qs}`);
+  },
 };

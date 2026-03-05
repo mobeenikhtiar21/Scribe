@@ -6,6 +6,8 @@ import { printRouter } from './routes/print';
 import { sendRouter } from './routes/send';
 import { messageRouter } from './routes/message';
 import { notesRouter } from './routes/notes';
+import { draftsRouter } from './routes/drafts';
+import { catalogRouter } from './routes/catalog';
 import { storeContext } from './middleware/storeContext';
 
 const app = express();
@@ -28,5 +30,7 @@ app.use('/api/order', storeContext, printRouter);
 app.use('/api/order', storeContext, sendRouter);
 app.use('/api/order', storeContext, messageRouter);
 app.use('/api/order', storeContext, notesRouter);
+app.use('/api/drafts', storeContext, draftsRouter);
+app.use('/api/catalog', storeContext, catalogRouter);
 
 export default app;

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Flex,
@@ -10,21 +10,22 @@ import {
   ProgressCircle,
   Message,
   Button,
+  Small,
 } from '@bigcommerce/big-design';
+import { AddIcon, ArrowDownwardIcon } from '@bigcommerce/big-design-icons';
 import { api } from '../api/client';
-import type { OrderListItem } from '../types';
+import type { DraftOrder } from '../types';
+import { CreateDraftModal } from './CreateDraftModal';
+import { ImportDraftModal } from './ImportDraftModal';
 
 interface DraftOrdersListProps {
   onSelectOrder: (orderId: number) => void;
 }
 
 function statusVariant(status: string): 'success' | 'warning' | 'danger' | 'secondary' | 'primary' {
-  const s = status.toLowerCase();
-  if (s.includes('completed') || s.includes('shipped')) return 'success';
-  if (s.includes('pending') || s.includes('awaiting')) return 'warning';
-  if (s.includes('cancelled') || s.includes('declined') || s.includes('refund')) return 'danger';
-  if (s.includes('incomplete')) return 'secondary';
-  return 'primary';
+  if (status === 'converted') return 'success';
+  if (status === 'expired') return 'danger';
+  return 'warning'; // open
 }
 
 function formatDate(dateStr: string): string {
@@ -35,28 +36,59 @@ function formatDate(dateStr: string): string {
   });
 }
 
-function formatCurrency(amount: string, currency: string): string {
+function formatCurrency(amount: string | null, currency: string | null): string {
+  if (!amount) return '—';
   const num = parseFloat(amount);
   if (isNaN(num)) return amount;
   return `${currency || '$'}${num.toFixed(2)}`;
 }
 
-export function DraftOrdersList({ onSelectOrder }: DraftOrdersListProps) {
-  const [orders, setOrders] = useState<OrderListItem[]>([]);
+function copyToClipboard(text: string) {
+  navigator.clipboard.writeText(text).catch(() => {
+    // Fallback for older browsers
+    const el = document.createElement('textarea');
+    el.value = text;
+    document.body.appendChild(el);
+    el.select();
+    document.execCommand('copy');
+    document.body.removeChild(el);
+  });
+}
+
+export function DraftOrdersList({ onSelectOrder: _onSelectOrder }: DraftOrdersListProps) {
+  const [drafts, setDrafts] = useState<DraftOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 50;
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  useEffect(() => {
+  const loadDrafts = useCallback(() => {
     setLoading(true);
     setError(null);
     api
-      .listOrders({ status_id: 0, page: currentPage, limit: itemsPerPage })
-      .then((data) => setOrders(data as unknown as OrderListItem[]))
+      .listDrafts()
+      .then((data) => setDrafts(data as unknown as DraftOrder[]))
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
-  }, [currentPage]);
+  }, []);
+
+  useEffect(() => { loadDrafts(); }, [loadDrafts]);
+
+  const handleDelete = async (cartId: string) => {
+    try {
+      await api.deleteDraft(cartId);
+      setDrafts((prev) => prev.filter((d) => d.cart_id !== cartId));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete draft');
+    }
+  };
+
+  const handleCopy = (cartId: string, url: string) => {
+    copyToClipboard(url);
+    setCopiedId(cartId);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
 
   if (loading) {
     return (
@@ -74,116 +106,140 @@ export function DraftOrdersList({ onSelectOrder }: DraftOrdersListProps) {
       <Panel>
         <Flex justifyContent="space-between" alignItems="center" marginBottom="medium">
           <Text marginBottom="none">
-            Draft orders (Incomplete) — click a row to open Print, Send, Message, and Notes actions.
+            Draft Orders — create new drafts or import existing ones from BigCommerce admin.
           </Text>
+          <Flex flexGap="0.5rem">
+            <Button
+              variant="secondary"
+              iconLeft={<ArrowDownwardIcon />}
+              onClick={() => setShowImportModal(true)}
+            >
+              Import Draft
+            </Button>
+            <Button
+              iconLeft={<AddIcon />}
+              onClick={() => setShowCreateModal(true)}
+            >
+              Create Draft
+            </Button>
+          </Flex>
         </Flex>
 
         {error && (
           <Message
             type="error"
-            header="Failed to load orders"
+            header="Error"
             messages={[{ text: error }]}
             marginBottom="medium"
           />
         )}
 
-        {!error && orders.length === 0 && (
+        {!error && drafts.length === 0 && (
           <Message
             type="info"
             messages={[
               {
-                text: 'No draft orders found. Draft orders appear here when created in your BigCommerce admin.',
+                text: 'No draft orders yet. Create a new draft or import one from the BigCommerce admin.',
               },
             ]}
           />
         )}
 
-        {orders.length > 0 && (
+        {drafts.length > 0 && (
           <Table
             columns={[
               {
-                header: 'Order #',
-                hash: 'id',
-                render: ({ id }: OrderListItem) => (
+                header: 'Cart ID',
+                hash: 'cart_id',
+                render: ({ cart_id }: DraftOrder) => (
                   <Text marginBottom="none">
-                    <Button
-                      variant="subtle"
-                      onClick={() => onSelectOrder(id)}
-                    >
-                      #{id}
-                    </Button>
+                    <Small>{cart_id.substring(0, 8)}...</Small>
                   </Text>
                 ),
               },
               {
                 header: 'Customer',
                 hash: 'customer',
-                render: ({ billing_address }: OrderListItem) => (
+                render: ({ customer_name, customer_email }: DraftOrder) => (
                   <Text marginBottom="none">
-                    {billing_address
-                      ? `${billing_address.first_name} ${billing_address.last_name}`
-                      : 'N/A'}
+                    {customer_name || customer_email || 'Guest'}
                   </Text>
-                ),
-              },
-              {
-                header: 'Email',
-                hash: 'email',
-                render: ({ billing_address }: OrderListItem) => (
-                  <Text marginBottom="none">{billing_address?.email || 'N/A'}</Text>
                 ),
               },
               {
                 header: 'Total',
                 hash: 'total',
-                render: ({ total_inc_tax, currency_code }: OrderListItem) => (
+                render: ({ total, currency_code }: DraftOrder) => (
                   <Text bold marginBottom="none">
-                    {formatCurrency(total_inc_tax, currency_code)}
+                    {formatCurrency(total, currency_code)}
                   </Text>
                 ),
               },
               {
                 header: 'Date',
                 hash: 'date',
-                render: ({ date_created }: OrderListItem) => (
-                  <Text marginBottom="none">{formatDate(date_created)}</Text>
+                render: ({ created_at }: DraftOrder) => (
+                  <Text marginBottom="none">{formatDate(created_at)}</Text>
                 ),
               },
               {
                 header: 'Status',
                 hash: 'status',
-                render: ({ status }: OrderListItem) => (
+                render: ({ status }: DraftOrder) => (
                   <Badge label={status} variant={statusVariant(status)} />
                 ),
               },
+              {
+                header: 'Checkout URL',
+                hash: 'checkout_url',
+                render: ({ cart_id, checkout_url }: DraftOrder) =>
+                  checkout_url ? (
+                    <Button
+                      variant="subtle"
+                      onClick={() => handleCopy(cart_id, checkout_url)}
+                    >
+                      {copiedId === cart_id ? 'Copied!' : 'Copy URL'}
+                    </Button>
+                  ) : (
+                    <Text marginBottom="none">—</Text>
+                  ),
+              },
+              {
+                header: '',
+                hash: 'actions',
+                render: ({ cart_id }: DraftOrder) => (
+                  <Button
+                    variant="subtle"
+                    onClick={() => handleDelete(cart_id)}
+                  >
+                    Delete
+                  </Button>
+                ),
+              },
             ]}
-            items={orders}
+            items={drafts}
             stickyHeader
           />
         )}
-
-        {(orders.length >= itemsPerPage || currentPage > 1) && (
-          <Flex justifyContent="center" marginTop="medium" flexGap="0.5rem">
-            <Button
-              variant="secondary"
-              disabled={currentPage <= 1}
-              onClick={() => setCurrentPage((p) => p - 1)}
-            >
-              Previous
-            </Button>
-            <Text marginBottom="none" style={{ alignSelf: 'center' }}>
-              Page {currentPage}
-            </Text>
-            <Button
-              variant="secondary"
-              disabled={orders.length < itemsPerPage}
-              onClick={() => setCurrentPage((p) => p + 1)}
-            >
-              Next
-            </Button>
-          </Flex>
-        )}
       </Panel>
+
+      <CreateDraftModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onCreated={() => {
+          setShowCreateModal(false);
+          loadDrafts();
+        }}
+      />
+
+      <ImportDraftModal
+        isOpen={showImportModal}
+        onClose={() => setShowImportModal(false)}
+        onImported={() => {
+          setShowImportModal(false);
+          loadDrafts();
+        }}
+      />
     </Box>
   );
 }

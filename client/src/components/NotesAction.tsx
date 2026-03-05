@@ -6,6 +6,7 @@ import {
   FlexItem,
   Textarea,
   Text,
+  Small,
   FormGroup,
   HR,
   InlineMessage,
@@ -125,7 +126,7 @@ export function NotesAction({ orderId }: NotesActionProps) {
             key={note.id}
             marginTop="small"
             padding="small"
-            style={{ background: '#f6f7fc', borderRadius: '4px', borderLeft: '3px solid #3c64f4' }}
+            className="scribe-note-card"
           >
             <Flex justifyContent="space-between" alignItems="center">
               <FlexItem>
@@ -133,7 +134,7 @@ export function NotesAction({ orderId }: NotesActionProps) {
               </FlexItem>
               <FlexItem>
                 <Text color="secondary" marginBottom="none">
-                  <small>{formatTimestamp(note.created_at)}</small>
+                  <Small>{formatTimestamp(note.created_at)}</Small>
                 </Text>
               </FlexItem>
             </Flex>

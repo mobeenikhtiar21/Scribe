@@ -13,6 +13,7 @@ import {
 } from '@bigcommerce/big-design';
 import { DeleteIcon } from '@bigcommerce/big-design-icons';
 import { api } from '../api/client';
+import { SearchAutocomplete } from './SearchAutocomplete';
 import type { DraftOrder, Product, Customer } from '../types';
 
 interface LineItem {
@@ -180,64 +181,46 @@ export function CreateDraftModal({ isOpen, onClose, onCreated }: CreateDraftModa
               <Button variant="subtle" onClick={() => setSelectedCustomer(null)}>Change</Button>
             </Flex>
           ) : (
-            <>
-              <Input
-                placeholder="Search customers by name..."
-                value={customerQuery}
-                onChange={(e) => {
-                  setCustomerQuery(e.target.value);
-                  searchCustomers(e.target.value);
-                }}
-              />
-              {searchingCustomers && <ProgressCircle size="xSmall" />}
-              {customerResults.length > 0 && (
-                <Box style={{ border: '1px solid #d9dce9', borderRadius: 4, maxHeight: 150, overflow: 'auto' }} marginTop="xxSmall">
-                  {customerResults.map((c) => (
-                    <Box
-                      key={c.id}
-                      padding="xSmall"
-                      style={{ cursor: 'pointer' }}
-                      onClick={() => {
-                        setSelectedCustomer(c);
-                        setCustomerQuery('');
-                        setCustomerResults([]);
-                      }}
-                    >
-                      <Text marginBottom="none">{c.first_name} {c.last_name} — {c.email}</Text>
-                    </Box>
-                  ))}
-                </Box>
+            <SearchAutocomplete<Customer>
+              placeholder="Search customers by name..."
+              value={customerQuery}
+              onChange={(q) => {
+                setCustomerQuery(q);
+                searchCustomers(q);
+              }}
+              results={customerResults}
+              isLoading={searchingCustomers}
+              getKey={(c) => c.id}
+              onSelect={(c) => {
+                setSelectedCustomer(c);
+                setCustomerQuery('');
+                setCustomerResults([]);
+              }}
+              renderItem={(c) => (
+                <Text marginBottom="none">{c.first_name} {c.last_name} — {c.email}</Text>
               )}
-            </>
+            />
           )}
         </Box>
 
         {/* Product Search */}
         <Box marginBottom="medium">
           <Text bold marginBottom="xSmall">Add Products</Text>
-          <Input
+          <SearchAutocomplete<Product>
             placeholder="Search products by name or SKU..."
             value={productQuery}
-            onChange={(e) => {
-              setProductQuery(e.target.value);
-              searchProducts(e.target.value);
+            onChange={(q) => {
+              setProductQuery(q);
+              searchProducts(q);
             }}
+            results={productResults}
+            isLoading={searchingProducts}
+            getKey={(p) => p.id}
+            onSelect={addProduct}
+            renderItem={(p) => (
+              <Text marginBottom="none">{p.name} {p.sku ? `(${p.sku})` : ''} — ${p.price}</Text>
+            )}
           />
-          {searchingProducts && <ProgressCircle size="xSmall" />}
-          {productResults.length > 0 && (
-            <Box style={{ border: '1px solid #d9dce9', borderRadius: 4, maxHeight: 200, overflow: 'auto' }} marginTop="xxSmall">
-              {productResults.map((p) => (
-                <Box
-                  key={p.id}
-                  padding="xSmall"
-                  style={{ cursor: 'pointer' }}
-                  onClick={() => addProduct(p)}
-                >
-                  <Text marginBottom="none">{p.name} {p.sku ? `(${p.sku})` : ''} — ${p.price}</Text>
-                </Box>
-              ))}
-            </Box>
-          )}
         </Box>
 
         {/* Line Items Table */}

@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "nodemon --watch src --ext ts --exec ts-node src/index.ts",
-    "build": "tsc",
-    "start": "node dist/index.js",
+    "dev": "node init && nodemon --watch src --ext ts --exec ts-node src/index.ts",
+    "build": "node init && tsc",
+    "start": "node init && node dist/index.js",
     "lint": "eslint src/",
     "test": "vitest run",
     "test:watch": "vitest"

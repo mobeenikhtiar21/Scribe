@@ -11,10 +11,8 @@ data/*.db-wal
 data/*.db-shm
 
 # Environment
-.env
 
 # IDE
-.vscode/
 .idea/
 
 # OS
@@ -23,3 +21,12 @@ Thumbs.db
 
 # Logs
 *.log
+
+
+
+
+.gitignore
+config.bat
+branch_structure.json
+temp_auto_push.bat
+temp_interactive_push.bat

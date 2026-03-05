@@ -1,12 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
   Box,
-  Flex,
-  H1,
   Panel,
   Message,
   ProgressCircle,
-  Button,
 } from '@bigcommerce/big-design';
 import { api } from './api/client';
 import { ActionBar } from './components/ActionBar';
@@ -96,9 +93,9 @@ function App() {
   if (loading) {
     return (
       <Box padding="medium">
-        <Flex justifyContent="center" alignItems="center" style={{ minHeight: '200px' }}>
+        <div className="scribe-loader-container">
           <ProgressCircle size="large" />
-        </Flex>
+        </div>
       </Box>
     );
   }
@@ -108,7 +105,7 @@ function App() {
     if (!context) {
       return (
         <Box padding="medium">
-          <H1>Scribe</H1>
+          <h1>Scribe</h1>
           <Message
             type="warning"
             messages={[
@@ -132,25 +129,31 @@ function App() {
   if (selectedDraft && draftCart) {
     return (
       <Box padding="medium">
-        <H1>Scribe Actions</H1>
-        <Button variant="subtle" onClick={handleBackToList} marginBottom="medium">
-          ← Back to Draft Orders
-        </Button>
+        <h1>Order Actions</h1>
+        <button className="scribe-back-btn" onClick={handleBackToList}>
+          ← All Drafts
+        </button>
         <Panel>
           <DraftSummary draft={selectedDraft} cart={draftCart} />
-          <ActionBar
-            activeView={activeView}
-            onViewChange={setActiveView}
-            orderId={selectedDraft.cart_id}
-          />
-
-          <Box marginTop="medium">
-            {activeView === 'print' && <DraftPrintAction cartId={selectedDraft.cart_id} />}
-            {activeView === 'send' && <DraftSendAction draft={selectedDraft} />}
-            {activeView === 'message' && <DraftMessageAction draft={selectedDraft} />}
-            {activeView === 'notes' && <DraftNotesAction cartId={selectedDraft.cart_id} />}
-          </Box>
         </Panel>
+
+        <Box marginTop="medium">
+          <Panel>
+            <ActionBar
+              activeView={activeView}
+              onViewChange={setActiveView}
+              orderId={selectedDraft.cart_id}
+              isDraft
+            />
+
+            <Box marginTop="medium">
+              {activeView === 'print' && <DraftPrintAction cartId={selectedDraft.cart_id} />}
+              {activeView === 'send' && <DraftSendAction draft={selectedDraft} />}
+              {activeView === 'message' && <DraftMessageAction draft={selectedDraft} />}
+              {activeView === 'notes' && <DraftNotesAction cartId={selectedDraft.cart_id} />}
+            </Box>
+          </Panel>
+        </Box>
       </Box>
     );
   }
@@ -159,11 +162,11 @@ function App() {
   if (error || !order) {
     return (
       <Box padding="medium">
-        <H1>Scribe Actions</H1>
+        <h1>Order Actions</h1>
         {!urlOrderId && (
-          <Button variant="subtle" onClick={handleBackToList} marginBottom="medium">
-            ← Back to Draft Orders
-          </Button>
+          <button className="scribe-back-btn" onClick={handleBackToList}>
+            ← All Drafts
+          </button>
         )}
         <Message
           type="error"
@@ -183,27 +186,32 @@ function App() {
 
   return (
     <Box padding="medium">
-      <H1>Scribe Actions</H1>
+      <h1>Order Actions</h1>
       {!urlOrderId && (
-        <Button variant="subtle" onClick={handleBackToList} marginBottom="medium">
-          ← Back to Draft Orders
-        </Button>
+        <button className="scribe-back-btn" onClick={handleBackToList}>
+          ← All Drafts
+        </button>
       )}
       <Panel>
         <OrderSummary order={order} />
-        <ActionBar
-          activeView={activeView}
-          onViewChange={setActiveView}
-          orderId={selectedOrderId!}
-        />
-
-        <Box marginTop="medium">
-          {activeView === 'print' && <PrintAction orderId={selectedOrderId!} />}
-          {activeView === 'send' && <SendAction orderId={selectedOrderId!} order={order} />}
-          {activeView === 'message' && <MessageAction orderId={selectedOrderId!} order={order} />}
-          {activeView === 'notes' && <NotesAction orderId={selectedOrderId!} />}
-        </Box>
       </Panel>
+
+      <Box marginTop="medium">
+        <Panel>
+          <ActionBar
+            activeView={activeView}
+            onViewChange={setActiveView}
+            orderId={selectedOrderId!}
+          />
+
+          <Box marginTop="medium">
+            {activeView === 'print' && <PrintAction orderId={selectedOrderId!} />}
+            {activeView === 'send' && <SendAction orderId={selectedOrderId!} order={order} />}
+            {activeView === 'message' && <MessageAction orderId={selectedOrderId!} order={order} />}
+            {activeView === 'notes' && <NotesAction orderId={selectedOrderId!} />}
+          </Box>
+        </Panel>
+      </Box>
     </Box>
   );
 }
